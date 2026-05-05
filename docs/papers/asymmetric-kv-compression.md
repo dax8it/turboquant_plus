@@ -338,6 +338,14 @@ These findings have been independently confirmed by multiple researchers:
 - Note: tbq4_1 (blck_size=128) must be specified explicitly for head_dim=128 models — auto-detection doesn't propagate through Rust API bindings
 - Filed separate issue on ggerganov/llama.cpp about ctx_size/F16 RoPE behavior
 
+**@jagmarques** — [E8 lattice VQ on Mistral-7B, Cerebrium A10/A100](https://github.com/ml-explore/mlx-lm/issues/1060#issuecomment-4202504764) (2026-04-07):
+- Independent confirmation of asymmetric K/V advantage using a completely different quantization method (E8 lattice vector quantization, not TurboQuant)
+- Mistral-7B (GQA 8:1), A10, 1742-tok prefix: K3V2 (asymmetric 3b-K/2b-V) +0.82% vs K2V2 (symmetric 2-bit) +0.91% at 35% eviction
+- **Asymmetric advantage scales with context length:** at 3544-tok prefix (A100), K3V2 gives +0.35% vs K2V2 +2.26% (6.4× improvement)
+- K4V2 shows diminishing returns vs K3V2, consistent with our finding that K precision beyond a threshold doesn't help once softmax error is below the eviction noise floor
+- Provided clean explanation of GQA amplification: with 8 query heads per K head, K quantization error is effectively 8× worse than V error in output impact
+- Cross-method validation: same asymmetric conclusion holds for E8 VQ as for TurboQuant PolarQuant
+
 **@redwolfweb** — [Qwen3.5-27B Q4_K_M, RTX 5090, Debian 13](https://github.com/TheTom/llama-cpp-turboquant/issues/47#issuecomment-4185458440) (2026-04-04):
 - Confirmed head_dim=256 fix works across **all 6 K/V combinations**: turbo2/turbo2, turbo3/turbo3, turbo3/q8_0, q8_0/turbo3, turbo2/q8_0, q8_0/turbo2
 - Each config tested with philosophical + mathematical prompts plus chat. Also tested 23,539-token input. No errors, correct answers, no grammar parse errors
