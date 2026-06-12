@@ -38,7 +38,7 @@ Validated at 512 and 8K context. NIAH retrieval passed. Benefit scales with mode
 llama-server -m model.gguf -ctk q8_0 -ctv turbo2 -fa 1
 ```
 
-See [full paper](docs/papers/layer-aware-v-compression.md).
+See [full paper](papers/layer-aware-v-compression.md).
 
 ## Prefill Context Scaling (Verified 2K-32K)
 
@@ -76,7 +76,7 @@ turbo4 decode is faster than turbo3 due to simpler nibble packing and direct-ext
 |------|------|--------|-------------------|
 | Single needle (33 positions) | 30/33 (90.9%) | **31/33 (93.9%)** | 9/9 (3-pos) |
 
-turbo4 beats q8_0 on retrieval (31/33 vs 30/33). Shared failure at 8K/100% is a model weakness, not quantization. See [turbo4 resurrection](docs/papers/turbo4-resurrection.md) for the full investigation.
+turbo4 beats q8_0 on retrieval (31/33 vs 30/33). Shared failure at 8K/100% is a model weakness, not quantization. See [turbo4 resurrection](papers/turbo4-resurrection.md) for the full investigation.
 
 ## Large Model Stress Tests (M5 Max 128GB)
 
@@ -89,9 +89,9 @@ turbo4 beats q8_0 on retrieval (31/33 vs 30/33). Shared failure at 8K/100% is a 
 
 turbo3 prefill is faster than q8_0 at 32K on both models (70B: 80.8 vs 75.2 t/s, 104B: 64.5 vs 62.3 t/s). Smaller KV cache = less memory bandwidth during attention.
 
-104B at 128K requires raising macOS GPU memory cap: `sudo sysctl iogpu.wired_limit_mb=117964` (90% of 128GB). Without this, Metal stalls at ~49K context on 70B+ models. See [Getting Started Guide](docs/getting-started.md) for per-RAM values.
+104B at 128K requires raising macOS GPU memory cap: `sudo sysctl iogpu.wired_limit_mb=117964` (90% of 128GB). Without this, Metal stalls at ~49K context on 70B+ models. See [Getting Started Guide](getting-started.md) for per-RAM values.
 
-See [M5 Max stress test](docs/papers/m5-max-stress-test.md) for the full data.
+See [M5 Max stress test](papers/m5-max-stress-test.md) for the full data.
 
 ## KL Divergence vs f16
 
@@ -116,9 +116,9 @@ Dense models see smaller gains (attention is <5% of decode — FFN dominates). N
 
 **Sparse V dequant** skips V dequantization for positions where softmax attention weight < 1e-6. At long context, most attention weights are negligible — this saves approximately half the total dequant cost. +22.8% decode at 32K vs turbo3 without sparse V, pushing the ratio from 0.76x to 0.93x of q8_0. Sparse V introduces no additional PPL degradation beyond the underlying compression (validated at 32K with 50 chunks on wikitext-103, CI ±0.021). Benefit scales with context length. This is implemented as a minimal kernel modification.
 
-Sparse V is not TurboQuant-specific: on q8_0 KV cache it yields a +5% decode speedup with identical PPL and NIAH, confirming this is a general attention-aware optimization rather than a compression-specific trick. See the [full paper](docs/papers/sparse-v-dequant.md).
+Sparse V is not TurboQuant-specific: on q8_0 KV cache it yields a +5% decode speedup with identical PPL and NIAH, confirming this is a general attention-aware optimization rather than a compression-specific trick. See the [full paper](papers/sparse-v-dequant.md).
 
-On M2/M1 (pre-M5), the auto-detected 4-mag LUT gives an additional +38-45% decode improvement at long context, and is additive with sparse V. See [Decode Speed Hardware Analysis](docs/decode-speed-hardware-analysis.md) for the full 14-approach experiment log, and [Context Scaling Deep Dive](docs/context-scaling-deep-dive.md) for the M5 Max optimization journey.
+On M2/M1 (pre-M5), the auto-detected 4-mag LUT gives an additional +38-45% decode improvement at long context, and is additive with sparse V. See [Decode Speed Hardware Analysis](decode-speed-hardware-analysis.md) for the full 14-approach experiment log, and [Context Scaling Deep Dive](context-scaling-deep-dive.md) for the M5 Max optimization journey.
 
 ## Community Hardware: CUDA (RTX 3090)
 
@@ -188,7 +188,7 @@ First AMD GPU validation. First attempt — no debugging, no analysis, just raw 
 - Speed flat across configs (~85 t/s decode, ~590 t/s prefill at pp512)
 - Context scaling: 0.96-0.99x vs q8_0 at pp2048-8192
 
-See [Windows RDNA 4 Setup Guide](docs/windows-rdna4-setup.md) for build instructions and 9 gotchas.
+See [Windows RDNA 4 Setup Guide](windows-rdna4-setup.md) for build instructions and 9 gotchas.
 
 ## Speed Optimization Journey
 
@@ -201,7 +201,7 @@ See [Windows RDNA 4 Setup Guide](docs/windows-rdna4-setup.md) for build instruct
 | + block-32 storage | 2747 | 1.02x |
 | **+ optimized dequant** | **2524** | **0.98x** |
 
-> The final number (2524 at 4K) is lower than the peak (2747 at 512) because longer context is naturally slower. The key metric is the **ratio** vs q8_0, which stays flat at 0.99x. See [Speed Experiments](docs/speed-experiments.md) for the full journey.
+> The final number (2524 at 4K) is lower than the peak (2747 at 512) because longer context is naturally slower. The key metric is the **ratio** vs q8_0, which stays flat at 0.99x. See [Speed Experiments](speed-experiments.md) for the full journey.
 
 ## Compression Quality (Python Prototype)
 
