@@ -1,6 +1,6 @@
 # TurboQuant+
 
-> **🚀 TurboQuant KV cache compression is now in [vLLM](https://github.com/vllm-project/vllm)** ([PR #38479](https://github.com/vllm-project/vllm/pull/38479), merged April 2026): `--kv-cache-dtype turboquant_k8v4` and friends, with fused Triton store/decode kernels. The PR discussion drew on the asymmetric K/V findings from this repo.
+> **🚀 TurboQuant KV cache compression is now in [vLLM](https://github.com/vllm-project/vllm)** ([PR #38479](https://github.com/vllm-project/vllm/pull/38479), merged April 2026): `--kv-cache-dtype turboquant_k8v4` and friends, with fused Triton store/decode kernels. The PR discussion drew on the asymmetric K/V findings from this repo. **Upstream llama.cpp has merged the core idea too**: Hadamard KV cache rotation ([#21038](https://github.com/ggml-org/llama.cpp/pull/21038), citing TurboQuant directly) with fast WHT kernels on CPU ([#22631](https://github.com/ggml-org/llama.cpp/pull/22631)), CUDA ([#23615](https://github.com/ggml-org/llama.cpp/pull/23615)), and Vulkan ([#23687](https://github.com/ggml-org/llama.cpp/pull/23687)). Rotation + the stock q4_0 cache is essentially turbo4's rotation stage; the PolarQuant codebook, norm extraction, and asymmetric policies remain here and in the fork.
 
 > ### [Getting Started Guide](docs/getting-started.md) | [Configuration Recommendations](docs/turboquant-recommendations.md) | [Benchmarks](docs/benchmarks.md) | [Commercial Support](https://x.com/no_stp_on_snek)
 
@@ -13,6 +13,7 @@ This repository is the **research home**: the Python reference implementation, t
 | Engine | Platform | Status | Notes |
 |--------|----------|--------|-------|
 | [vLLM](https://github.com/vllm-project/vllm) | CUDA / ROCm, datacenter | **Upstream, merged** | `--kv-cache-dtype turboquant_k8v4` and friends ([PR #38479](https://github.com/vllm-project/vllm/pull/38479)) |
+| [llama.cpp](https://github.com/ggml-org/llama.cpp) | All backends | **Upstream, rotation merged** | Hadamard KV cache rotation ([#21038](https://github.com/ggml-org/llama.cpp/pull/21038)) + fast WHT kernels (CPU [#22631](https://github.com/ggml-org/llama.cpp/pull/22631), CUDA [#23615](https://github.com/ggml-org/llama.cpp/pull/23615), Vulkan [#23687](https://github.com/ggml-org/llama.cpp/pull/23687)). Rotation + q4_0 cache approximates turbo4; full PolarQuant codec is in the fork below |
 | [llama-cpp-turboquant](https://github.com/TheTom/llama-cpp-turboquant) | Metal, CUDA, HIP, CPU | **Production fork** | turbo2/3/4 KV cache + TQ3_1S/TQ4_1S weight formats; [prebuilt binaries](https://github.com/TheTom/llama-cpp-turboquant/releases) for Mac (Metal) and Windows (CUDA) |
 | [mlx-swift-lm](https://github.com/ekryski/mlx-swift-lm/tree/alpha) | Apple Silicon, Swift | Active collaboration | Fastest Apple path: ~2.5x faster decode than Python mlx-lm, full TQ+ support including turbo4v2. 144 tok/s on Qwen3.5-35B-A3B MoE at 4K on M5 Max |
 | [vllm-swift](https://github.com/TheTom/vllm-swift) | Apple Silicon, Swift | Active | OpenAI-compatible serving built on mlx-swift-lm; no Python in the inference hot path |
@@ -176,7 +177,8 @@ docs/
 | Sparse V | ✅ | Attention-gated dequant skip, +22.8% decode on MoE. [Upstream PR #21119](https://github.com/ggml-org/llama.cpp/pull/21119) |
 | Block size optimization | ✅ | 32→128, 12% better compression, zero quality cost |
 | vLLM upstream | ✅ | Merged as the TurboQuant attention backend ([PR #38479](https://github.com/vllm-project/vllm/pull/38479)) |
-| Upstream coordination | 🔄 | llama.cpp PR preparation ([#27](https://github.com/TheTom/turboquant_plus/issues/27)) |
+| llama.cpp upstream (rotation) | ✅ | Hadamard KV rotation + FWHT kernels merged upstream ([#21038](https://github.com/ggml-org/llama.cpp/pull/21038), [#22631](https://github.com/ggml-org/llama.cpp/pull/22631)) |
+| Upstream coordination | 🔄 | llama.cpp PR preparation for the full codec ([#27](https://github.com/TheTom/turboquant_plus/issues/27)) |
 | TurboQuant+ extensions | ⏳ | Adaptive bits, temporal decay, MoE-aware compression |
 | MLX Swift port | 🔄 | Active collaboration with @ekryski on [mlx-swift-lm](https://github.com/ekryski/mlx-swift-lm/tree/alpha) — turbo4v2 working |
 
